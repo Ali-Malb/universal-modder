@@ -62,3 +62,12 @@ repo, they almost always want to **mod a game**, or to learn how a game was modd
   `um publish check .`.
 - **Wording:** keep skills and docs agent-neutral ("the agent", not a product name) except in sections
   about one specific agent.
+
+
+## Skills directory
+| Skill | Description |
+|---|---|
+| `ps4-pipeline` | Handles PS4 FPKG extraction, GoldHEN AFSP live staging, GP4 generation, and patch compilation. |
+
+## Workflow / Routing
+- If the target game contains PS4 indicators (CUSA title IDs, `param.sfo`, `eboot.bin`, `.pkg`, `app0/patch0` directories), route mod staging and compilation through `ps4-pipeline` instead of desktop file installation.

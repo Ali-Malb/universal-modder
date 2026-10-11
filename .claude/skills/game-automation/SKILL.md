@@ -102,3 +102,9 @@ the game window's **client area**.
 - **macOS:** `screencapture -l <windowid> shot.png` (window id via `GetWindowID` or AppleScript),
   `osascript` / `cliclick` for input. Input and screen recording need Accessibility and Screen Recording
   permission for the terminal.
+
+## Console & Remote Targets
+- PS4 verification cannot use local window hooks (`pyautogui`, Win32 foreground/input APIs, or `um win drive`).
+- Verify staged mods through remote checks: FTP listing/diff checks under `/data/GoldHEN/AFSP/<TITLE_ID>/`,
+  GoldHEN REST/API status checks when available, and explicit manual on-console validation steps in MODLOG.
+- Keep desktop automation for PC-only targets; treat console runs as remote deployment + telemetry validation.

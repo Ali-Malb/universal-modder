@@ -28,6 +28,12 @@ is the platform's norm.
 | Minecraft | Modrinth / CurseForge jar with `fabric.mod.json` / `neoforge.mods.toml` |
 | ROM hacks / GameMaker | patches only (BPS/IPS/xdelta), never the modified game file |
 
+## PS4 Distribution Formats
+- **Standalone Update FPKG:** build with `orbis-pub-cmd.exe` from a `pkg_ps4_patch` GP4 project that matches the
+  base game `CONTENT_ID` and passcode exactly.
+- **GoldHEN AFSP Archive:** provide a zip structured for drop-in deployment to
+  `/data/GoldHEN/AFSP/<TITLE_ID>/` so users can copy and live-stage without rebuilding a full package.
+
 A Nexus mod with options gets a FOMOD installer: see the
 [FOMOD tutorial](https://fomod-docs.readthedocs.io/en/latest/tutorial.html) and
 [STEP's FOMOD guide](https://stepmodifications.org/wiki/Guide:FOMOD). Nexus Mods' own

@@ -34,7 +34,7 @@ Otherwise install it once for any agent: `uv tool install git+https://github.com
 | Lint a mod before sharing (game files, decompiled code, secrets) | `um publish check` |
 
 Companion skills: **game-recon**, **reverse-engineering**, **fal-assets**, **asset-pipeline**,
-**game-automation**, **showcase-video**, **mashup-mods**, **publish-mod**, **share-field-notes**.
+**game-automation**, **showcase-video**, **mashup-mods**, **publish-mod**, **ps4-pipeline**, **share-field-notes**.
 
 ## The loop
 
@@ -60,7 +60,13 @@ Companion skills: **game-recon**, **reverse-engineering**, **fal-assets**, **ass
   If the community already has a loader (tModLoader, SMAPI, BepInEx, UE4SS, REFramework, SKSE, Fabric),
   use it.
 
-### 2. Pick the cheapest route that reaches the idea
+### 2. Platform check (PC/Windows vs PS4/Orbis)
+- **PC/Windows:** continue with local mod loaders, loose files, and DLL injection routes as needed.
+- **PS4/Orbis:** hand off execution to the **ps4-pipeline** skill. Bypass local process execution and desktop file
+  installation. For live testing, stage files through GoldHEN AFSP/LayerFS over FTP at
+  `/data/GoldHEN/AFSP/<TITLE_ID>/`. For final release, compile a GP4-based patch package.
+
+### 3. Pick the cheapest route that reaches the idea
 
 | Route | When | Examples |
 |---|---|---|
@@ -73,7 +79,7 @@ Companion skills: **game-recon**, **reverse-engineering**, **fal-assets**, **ass
 
 Write the chosen route and the reason into MODLOG.md before building.
 
-### 3. Lab setup (the safety net)
+### 4. Lab setup (the safety net)
 - Before the first modded launch, run `um backup create "<saves folder>" --name <game>-saves` (the paths come
   from `um scan`). Snapshot the config/profile folder too if you'll change settings.
 - Use a separate lab profile or save folder when the loader allows it (tModLoader
@@ -84,7 +90,7 @@ Write the chosen route and the reason into MODLOG.md before building.
 - Keep decompiled code and extracted assets outside the repo (e.g. `~/<game>-decomp`) and gitignore any
   derived data. Never commit game files.
 
-### 4. Read the source of truth
+### 5. Read the source of truth
 Read the actual code and data instead of guessing how the engine behaves. The **reverse-engineering** skill
 covers the tools:
 - decompile: ILSpy/`ilspycmd`, Cpp2IL, Vineflower, Ghidra/IDA over MCP;
@@ -95,12 +101,12 @@ Record exact names and IDs in MODLOG.md. Check what the executable enforces as w
 In AoE2 the data happily holds a 64th civilization, but the civ picker only lists civs from a table
 hard-coded in the exe, so the mod replaces a slot instead of adding one.
 
-### 5. Vertical slice first
+### 6. Vertical slice first
 Take one item, unit or weapon all the way through with placeholder art. Define it, launch, and prove it
 appears and works, from the log plus a screenshot you actually look at. Only then widen. Commit each working
 step in the mod's own git repo.
 
-### 6. Assets (fal-assets and asset-pipeline skills)
+### 7. Assets (fal-assets and asset-pipeline skills)
 Study the game's own assets first: size, palette, outline, camera angle, facing, frame layout. Then generate
 with `um fal`. Every call is recorded in `fal_manifest.jsonl`. Convert with `um sprite` / `um render3d` into
 exactly what the engine loads.
@@ -109,7 +115,7 @@ exactly what the engine loads.
 - **Pixel-art games:** generate on a flat background or with transparency, cut out, then do one
   nearest-neighbour fit to the frame size.
 
-### 7. Verify in the real game (build an oracle)
+### 8. Verify in the real game (build an oracle)
 The running game is the oracle; your reading of the code is not.
 - Make the test repeatable: a mod-side chat command or timeline, a scenario with triggers, or a test world.
   Drive the launch → menus → scene path with `um win launch/drive`, and check it with `um win shot` plus the
@@ -128,16 +134,16 @@ The running game is the oracle; your reading of the code is not.
 | SKSE | `Documents/My Games/<game>/SKSE/` |
 | Minecraft | `logs/latest.log` |
 
-### 8. Showcase (the showcase-video skill)
+### 9. Showcase (the showcase-video skill)
 Script the take so it's repeatable. Record the game window with the game's own audio (`um win record`).
 Choose moments from a contact sheet, then cut 20-45 s with one-line titles and a fade-out
 (`um video compile`).
 
-### 9. Package and publish (the publish-mod skill)
+### 10. Package and publish (the publish-mod skill)
 Run `um publish check <mod> --game "<install>"`. Write a README with install steps. Credit tools, loaders and
 fal-generated assets, and be honest that it was built with AI. Ship no game files.
 
-### 10. Leave a field note (the share-field-notes skill)
+### 11. Leave a field note (the share-field-notes skill)
 Turn `MODLOG.md` into a knowledge-base note (`um kb new ...`, then `um kb check`). Cover:
 - exact versions;
 - the route;

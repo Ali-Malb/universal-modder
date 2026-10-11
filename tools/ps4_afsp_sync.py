@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import argparse
 import ftplib
-import os
 import posixpath
 import re
 import sys
@@ -126,10 +125,6 @@ def sync_tree(ftp: ftplib.FTP, local_dir: Path, remote_root: str) -> SyncStats:
 
         with local_file.open("rb") as handle:
             ftp.storbinary(f"STOR {remote_file}", handle)
-        try:
-            os.utime(local_file, None)
-        except OSError:
-            pass
         print(f"Uploaded {rel}")
         stats.uploaded += 1
     return stats

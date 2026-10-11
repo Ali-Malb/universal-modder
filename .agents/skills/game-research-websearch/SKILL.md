@@ -17,8 +17,9 @@ Search engines are the index, not the source — every conclusion gets a real UR
 - Leaked code, SDKs or builds; pirated games, ROMs or ISOs; keygens or license keys; cracked exes;
   DRM or anti-cheat bypass tools. Don't fetch, link or paste them. What others learned from a leak
   can go in the journal in your own words, with where it came from (CONTRIBUTING.md).
-- Forum attachments, archived downloads and file-host mirrors. Read the posts; install tools only from
-  their official repo or releases, with the human's OK (`skills/mod-any-game/references/safety.md`).
+- Sony SDKs, Orbis SDKs, or official PlayStation development materials not authorized for distribution.
+  Read the posts; install tools only from their official repo or releases, with the human's OK
+  (`skills/mod-any-game/references/safety.md`).
 
 ## Core loop
 
@@ -67,19 +68,19 @@ Dead-forum recovery is the highest-value move in game modding research.
 - Read the README *and* the issues before recommending a tool; archived repos are fine to read, wrong
   to build on without a fork.
 
-## Nexus, Steam Workshop, Thunderstore
+## Modding community platforms
 
-- **Nexus**: public mod data needs no key: `POST https://api.nexusmods.com/v2/graphql`. The v1 REST API
-  (`https://api.nexusmods.com/v1/...`) needs the user's personal key. If they want that, they set it in
-  their own shell, and it never goes into the chat or a file. One page at a time; Nexus forbids bulk
-  scraping.
-- **Steam Workshop**: keyless `GetPublishedFileDetails` API (see
-  `knowledge/techniques/checking-steam-workshop-mods-against-a-game-version.md`).
-- **Thunderstore**: per-package endpoint
-  `https://thunderstore.io/api/experimental/package/<namespace>/<name>/` — not the whole-community
-  listing, which can be hundreds of MB.
-- Platforms are also *distribution* targets — if the end goal is shipping, hand off to
-  `publish-mod`.
+Research the PS4 modding community specifically. The PC-focused platforms below (Nexus Mods, Steam Workshop,
+Thunderstore) are out of scope for this PS4-only toolkit.
+
+- **GitHub**: "<game> PS4 mod", "<game> GoldHEN", "<game> FPKG", "<engine> PS4 mod loader". Repo search
+  for the tool itself.
+- **PS4 modding communities**: GoldHEN documentation, PS4 modding wikis, Discord servers focused on PS4
+  modding.
+- **Internet Archive**: preserve findings from dead PS4 modding forums.
+
+Platforms are also *distribution* targets — if the end goal is shipping, hand off to `publish-mod` (which
+covers FPKG and GoldHEN AFSP distribution only).
 
 ## Forums, Reddit, YouTube, GameBanana
 
@@ -111,8 +112,8 @@ Protocol — the agent never handles credentials:
 - Capture a live page, mod manager or game window when a claim is visual (a setting that must be
   toggled, a rendering artifact, a tool dialog state):
   - **Web pages**: an archive snapshot URL is the evidence — cite it instead of capturing a desktop.
-  - **Game windows**: use `um win shot --exe <game.exe> out.png` (windowed, GPU-safe), never a
-    full-desktop grab that would sweep in the human's other windows.
+  - **Console footage**: capture the PS4's video output (HDMI capture card or screen capture of the console
+    display) when a claim is visual (a modded asset appearing, a rendering artifact).
   - **Other screens**: the platform's snipping tool (Windows: `Win+Shift+S` / `ms-screenclip`;
     GNOME: `gnome-screenshot -w` (window) or `-a` (area); KDE: `spectacle -b -a -o <file>.png` (active
     window) or `-b -r` (region), and `-b` is required or nothing is written; never the whole desktop;

@@ -14,63 +14,54 @@ working versions, the route, and the gotchas before you touch anything. See the 
 
 ## 1. Find it and fingerprint it
 ```bash
-um scan --list                 # Steam, Epic and Xbox installs (Windows, WSL, Linux, macOS)
-um scan "<name or folder>"     # engine, version, exes (.NET?), anti-cheat, loaders, mod folders, saves, routes
+um scan --list                 # PS4 game installs: CUSA title IDs, param.sfo metadata, eboot.bin, app0/patch0
+um scan "<CUSA title ID or folder>"     # engine, version, eboot.bin (SELF/ELF), anti-cheat, FPKG type, routes
 um scan "<game>" --json        # the same, machine-readable
 ```
 `um` lives at `bin/um` in the universal-modder repo (plugins and clones put it on PATH). Anywhere else:
 `uv tool install git+https://github.com/rehan-remade/universal-modder`.
 
-`um scan` reads files only. It indexes the install (bounded), sniffs PE headers, the Unity/Godot/GameMaker
-headers and the Unreal version string, maps known games to their community loader, and points to the
-playbook to read: `skills/mod-any-game/references/engines/<engine>.md`.
+`um scan` reads files only. It indexes the PS4 install (bounded), reads param.sfo, checks eboot.bin encryption
+state (SELF vs decrypted ELF), maps known PS4 games to their FPKG structure, and points to the playbook to
+read: `skills/mod-any-game/references/engines/<engine>.md`.
 
 The scan can't see everything, so check these by hand:
-- **Game not in a store library** (GOG, itch, a standalone folder): pass the folder path.
+- **Game not in a store library** (standalone folder): pass the folder path.
 - **Several engines' signals:** launchers and web helpers are common. The top score wins, but read the
   "also" line.
-- **Anti-cheat installed elsewhere:** kernel drivers (Vanguard's `vgk.sys`) and launcher-level protection
-  don't live in the game folder. Search "<game> anti-cheat".
 - **Online-only or live-service games:** treat them as protected even if nothing was detected.
 
 ## 2. Research the living community (always; versions move)
 Search, in order:
-1. "<game> modding" / "<game> mod loader" / "<game> modding wiki". The game's wiki often has a modding page.
-2. Nexus Mods (most popular mods show which frameworks they depend on), Thunderstore (Unity games: BepInEx
-   packs), mod.io, the Steam Workshop (does the game have one? `um scan` shows installed Workshop content).
-3. GitHub: "<game> mod", "<game> modding api", "<game> decompile", "<game> sdk", "<engine> mod loader".
-4. Recent posts (X/Reddit/Discord announcements) for new frameworks. The loader might be days old.
+1. "<game> PS4 modding" / "<game> GoldHEN" / "<game> FPKG". The game's modding community may have a wiki
+   or documentation.
+2. GitHub: "<game> PS4 mod", "<game> modding api", "<game> decompile", "<game> sdk", "<engine> PS4 mod
+   loader".
+3. Recent posts (X/Reddit/Discord announcements) for new frameworks. The loader might be days old.
 
-Capture: the loader's name, repo, **current version and install steps**, the game versions it supports, a
+Capture: the toolchain's name, repo, **current version and install steps**, the game versions it supports, a
 "hello world" example mod, and where logs go.
 
 ## 3. Decide
 - **Can it be modded safely?** Look at anti-cheat, online-only parts, the EULA or mod policy, and the
-  ownership checks that loaders rely on (see `skills/mod-any-game/references/safety.md`). If not: say so,
-  and offer what is possible (official tools, offline modes, a different game with the same idea).
-- **Route:** loader API > data/asset mod > managed patching > native hooks > reimplementation/mashup. Pick
-  the first that reaches the user's idea.
+  ownership checks (see `skills/mod-any-game/references/safety.md`). If not: say so, and offer what is
+  possible (official tools, offline modes, a different game with the same idea).
+- **Route:** data/asset mod (app0/patch0) > native ELF patching > reimplementation/mashup. Pick the first
+  that reaches the user's idea. All routes go through ps4-pipeline.
 
 ## 4. Write MODDING_PLAN.md
 ```markdown
-# <Game> modding plan
-- Install: <path> (<store> <appid>), version <x>
-- Engine: <engine + version>, code: managed .NET / IL2CPP / native, 64-bit
+# <Game> PS4 modding plan
+- CUSA Title ID: <CUSAXXXXX>
+- CONTENT_ID: <content_id>   Passcode: <32_char_passcode>
+- APP_VER: <x>   FPKG type: <base | patch>
+- Engine: <engine + version>, code: native / IL2CPP / managed, 64-bit
 - Anti-cheat / online: <none | what + verdict>
 - Saves: <path>   Config: <path>   Logs: <path>
-- Community route: <loader vX.Y (repo)>, install: <steps>, example mod: <link>
+- Toolchain: <FPKG tool + version>, GoldHEN <version>
 - Chosen route for "<idea>": <route> because <reason>
-- Lab plan: backup <folders> (um backup), lab profile <how>, windowed <how>
+- Lab plan: backup <folders> (um backup), staged dir <how>, GoldHEN AFSP sync <how>
 - Unknowns to resolve first: <list>
 ```
-Then continue with the mod-any-game loop (lab setup → source of truth → vertical slice).
-
-## Console Identification: PS4 Targets
-
-If the target workspace contains `.pkg`, `eboot.bin`, or a `sce_sys/` folder:
-- **Metadata**: Parse `param.sfo` for `TITLE_ID`, `APP_VER`, and engine category.
-- **Executables**: Check if `eboot.bin` is encrypted (SELF) or decrypted (ELF). If SELF, prompt to dump the decrypted ELF from the console.
-- **Engine Locators**:
-  - Unreal Engine: Look inside `app0/<GameName>/Content/Paks/` (target PS4 cooked pak files).
-  - Unity: Look for `app0/Media/` or `app0/Data/Managed/`.
-  - Native/Custom: Check for container archives (`.cpk`, `.arc`, `.psarc`, `.dat`).
+Then continue with the mod-any-game PS4 loop (lab setup → source of truth → vertical slice → GoldHEN AFSP
+ staging → on-console verify).

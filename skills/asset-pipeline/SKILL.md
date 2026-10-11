@@ -80,33 +80,29 @@ Presets:
   when alpha is soft.
 
 ## 5. Verify in the game
-Put one converted asset into the game and screenshot it next to stock art (`um win shot`). Check the scale,
-facing, pivot, outline and palette. Fix the recipe, then batch-convert the rest with the same commands (a
-small script or Makefile, so the pipeline is reproducible from `assets/gen/`).
+Put one converted asset into the game (via GoldHEN AFSP staging or FPKG patch) and verify it appears on the
+PS4 next to stock art. Check the scale, facing, pivot, outline and palette on the console. Fix the recipe,
+then batch-convert the rest with the same commands (a small script or Makefile, so the pipeline is reproducible
+from `assets/gen/`).
 
-## 6. Converting a guest game's Unity assets (mashups)
-Read the user's own install with UnityPy and write a **local, private** resource pack. Never put the
-output in the mod, its repo or a release; each user runs the converter on their own copy.
-- **Memory:** `UnityPy.load()` decompresses a whole bundle (a 865 MB bundle became 8.7 GB of RAM).
-  Decompress only the serialized files and read `.resS` / `.resource` lazily, block by block; run each
-  converter module in its own process.
-- **Environment:** `UnityPy.Environment(path="")`, and load cross-referenced bundles together; otherwise
-  UnityPy searches the working directory for missing dependencies.
-- **Finding assets:** Addressables bundle names are hashed per update (find them by prefix); Addressables
-  2.x has a binary `catalog.bin`. Map game objects to prefabs through their GUID keys, not by guessing
-  names. Prefer the low-quality variant if one exists (same meshes, smaller textures).
-- **Skinned meshes are stored in bind pose (often a T-pose).** For the in-game look, evaluate the idle
-  clip at t = 0 yourself (UnityPy reads AnimationClip objects but does not sample them; Generic clips
-  bind Transforms by CRC32 of the path), rebuild world matrices, then skin.
-- **Walk the hierarchy from the container root**, skip inactive GameObjects and their children, and drop
-  helper meshes (eyelids, ground shadows, stencil/outline materials).
-- **Axes:** Unity is left-handed, Minecraft right-handed: flip one axis for positions and normals and
-  reverse the winding; flip V; clamp UVs. Verify with a named bone (the right hand ends on the right).
+## 6. Converting a guest game's assets (mashups)
+Read the user's own install with the appropriate tool for the engine and write a **local, private** resource
+pack. Never put the output in the mod, its repo or a release; each user runs the converter on their own copy.
+For PS4 targets, this means working from the FPKG dump (app0/patch0) rather than a desktop install.
+- **Memory:** be mindful of decompression memory when loading large bundles. Decompress only what you need,
+  block by block; run each converter module in its own process.
+- **Finding assets:** engine-specific containers and archives (CPK, ARC, PSARC, DAT). Map objects through
+  their keys, not by guessing names. Prefer the low-quality variant if one exists (same meshes, smaller
+  textures).
+- **Skinned meshes:** often stored in bind pose. For the in-game look, evaluate the idle clip at t = 0
+  yourself, rebuild world matrices, then skin.
+- **Walk the hierarchy from the container root**, skip inactive objects and their children, and drop helper
+  meshes (eyelids, ground shadows, stencil/outline materials).
+- **Axes:** confirm the engine's handedness and axis convention; flip as needed for positions, normals and UVs.
+  Verify with a named bone.
 - **Shared atlases:** crop each part's texture to its UV bounding box and remap UVs.
-- **Audio:** `AudioClip.samples` needs FMOD (`fmod_toolkit`); encode with ffmpeg to mono OGG.
-- **Minecraft side:** a pack needs `pack.mcmeta` (`pack_format` 15 for 1.20.1); `ResourceLocation`s
-  accept only `[a-z0-9_./-]`. For posed meshes, a custom mesh file drawn with
-  `RenderType.entityCutoutNoCull` is more robust than `forge:obj` (block-atlas textures, `usemtl`).
+- **Audio:** convert to the engine'sexpected format. PS4 soundbanks often use ATRAC9 (.at9); convert with an
+  AT9 encoder before archive repacking.
 - **Oracle:** render preview sheets by re-reading the files you wrote, and look at them.
 
 ## PS4 Asset Format Constraints

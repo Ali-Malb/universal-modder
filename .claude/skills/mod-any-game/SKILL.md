@@ -1,20 +1,16 @@
 ---
 name: mod-any-game
-description: Mod a PC game the user owns, taking an idea to working in the real game and recorded. It covers new items, weapons, enemies, bosses, units, civilizations, mechanics, art, sound, VR and cross-game mashups. Use when the user wants to mod, extend, hack on, reverse engineer or mash up a game ("add a nuke to Terraria", "make a new civ for Age of Empires", "put Minecraft inside X", "can I mod this game?"). It covers recon (engine, loaders, anti-cheat), choosing the route, a safe lab, a first vertical slice, fal-generated assets, in-game verification and a showcase clip.
+description: Mod a PlayStation 4 game the user owns, taking an idea to a working FPKG patch or GoldHEN AFSP drop and recorded on video. It covers CUSA title recon, param.sfo/eboot.bin/app0 inspection, route selection for PS4 games, a safe lab, a first vertical slice staged via GoldHEN AFSP, fal-generated assets, on-console verification and a showcase clip. Use when the user wants to mod, extend, reverse engineer or remix a PS4 game ("add a texture to this CUSA title", "stage a custom model via GoldHEN", "build an update FPKG", "can I mod this PS4 game?").
 ---
 
-# Mod any game
+# Mod any PlayStation 4 game
 
-You are the modder. The user names a game and an idea, and you take it all the way to working in the real
-game, on video. The method below shipped three projects:
-- a Terraria mod (homing missiles, a tactical nuke, new enemies, a boss);
-- a new Age of Empires II civilization with 3D-rendered units;
-- real Minecraft composited into GTA V.
+You are the PS4 modder. The user names a PS4 game (by name or CUSA title ID) and an idea, and you take it all
+the way to a working FPKG patch or GoldHEN AFSP drop, verified on the real console, on video. This skill is
+PS4-only: every workflow routes through `ps4-pipeline` and console-oriented tooling.
 
-It also folds in what the September 2026 wave of AI mashup mods (Minecraft in Elden Ring, skateboarding in
-MW2) showed about scaling up.
 - Case studies: `references/case-studies.md`.
-- Code: `examples/`.
+- Code: `examples/`, `tools/gp4_generator.py`, `tools/ps4_afsp_sync.py`.
 - Everything other agents have written down: the knowledge base (`knowledge/` in the repo, `um kb search`).
 
 ## Your tools
@@ -25,166 +21,148 @@ Otherwise install it once for any agent: `uv tool install git+https://github.com
 
 | Need | Command |
 |---|---|
-| What games are installed, what engine, what anti-cheat, where saves live | `um scan --list`, `um scan "<game>"` |
+| What PS4 games are installed, CUSA title IDs, param.sfo metadata, app0/patch0 structure | `um scan --list`, `um scan "<CUSA title ID or game>"` |
 | Sprites, textures, PBR, 3D models, rigs, SFX, music, voice, video (fal) | `um fal <recipe>`, or the fal MCP (`search_models`, `run_model`) |
 | Cut out / fit / pixelate / pack sprites; 3D model → sprite frames | `um sprite ...`, `um render3d ...` |
-| Launch, screenshot, click/type, record a Windows game (also from WSL) | `um win ...` |
 | Snapshot saves before touching them; undo | `um backup create/diff/restore` |
 | Cut a showcase video | `um video contact/compile/mux` |
 | Lint a mod before sharing (game files, decompiled code, secrets) | `um publish check` |
+| Stage modded assets to GoldHEN AFSP over FTP | `tools/ps4_afsp_sync.py --ip <PS4_IP> --title-id <CUSA_ID> --local-dir <staged_dir>` |
+| Generate a .gp4 project for orbis-pub-cmd | `tools/gp4_generator.py --staged-dir <staged_dir> --output-gp4 project.gp4 --content-id <CONTENT_ID>` |
 
 Companion skills: **game-recon**, **reverse-engineering**, **fal-assets**, **asset-pipeline**,
 **game-automation**, **showcase-video**, **mashup-mods**, **publish-mod**, **ps4-pipeline**, **share-field-notes**.
 
-## The loop
+This toolkit does **not** include PC/Windows automation (`um win` is removed). Console modding uses FTP staging
+and on-console verification, not desktop window hooks or local process injection.
+
+## The loop (PS4 / Orbis OS)
 
 ### 0. Intake (keep it short)
-- Get the game, the platform and store, and the idea in one sentence ("a homing missile launcher and a nuke
-  that craters the world"). Also agree what done means; usually that's working in game plus a 20-45 s clip.
+- Get the game (by name or CUSA title ID), and the idea in one sentence. Agree what done means; usually that's
+  a working FPKG patch or GoldHEN AFSP drop, verified on console, plus a 20-45 s clip.
 - Settle online vs offline up front. If the game is online or competitive and has anti-cheat, don't mod the
-  client (see Hard rules). Offer offline modes, private servers the user runs, or the official tools
-  (Workshop, creative/map editors).
-- Start `MODLOG.md` in the working folder as the journal. Record paths, IDs, file formats, class names, what
-  failed and why, and the next step. Anything not in the journal is lost at the next context compaction.
+  client (see Hard rules). Offer offline modes or the official tools.
+- Start `MODLOG.md` in the working folder as the journal. Record CUSA title ID, CONTENT_ID, passcode, file
+  paths, formats, what failed and why, and the next step. Anything not in the journal is lost at the next
+  context compaction.
 
 ### 1. Recon (the game-recon skill does this in depth)
-- **Search the knowledge base first.** Run `um kb search "<game>"` and `um kb search "<engine>"`. If
-  another agent left a field note, start from its exact versions, route and gotchas, and don't repeat its
-  dead ends. Without `um`, read
-  https://github.com/rehan-remade/universal-modder/blob/main/knowledge/INDEX.md.
-- Run `um scan "<game>"`. It reports the engine and version, whether code is managed or native, anti-cheat,
-  mod loaders already installed, save folders, ranked routes, and which playbook in
-  `references/engines/` to read. Read that playbook.
-- Research the community as it is now: the wiki's modding page, Nexus / Thunderstore / mod.io / Workshop,
-  GitHub, and the loader's current release and install steps. Versions move, so don't install from memory.
-  If the community already has a loader (tModLoader, SMAPI, BepInEx, UE4SS, REFramework, SKSE, Fabric),
-  use it.
+- **Search the knowledge base first.** Run `um kb search "<CUSA title ID or game>"`. If another agent left a
+  field note, start from its exact versions, route and gotchas, and don't repeat its dead ends. Without `um`,
+  read https://github.com/rehan-remade/universal-modder/blob/main/knowledge/INDEX.md.
+- Run `um scan "<CUSA title ID or game>"`. It reports the CUSA title ID, param.sfo metadata (CONTENT_ID,
+  passcode, APP_VER), eboot.bin presence, app0/patch0 structure, FPKG type (base/pkg/patch), and which
+  playbook in `references/engines/` to read. Read that playbook.
+- Research the community as it is now: PS4 modding wikis, GitHub, GoldHEN documentation, and the FPKG
+  toolchain's current release and install steps. Versions move, so don't install from memory.
 
-### 2. Platform check (PC/Windows vs PS4/Orbis)
-- **PC/Windows:** continue with local mod loaders, loose files, and DLL injection routes as needed.
-- **PS4/Orbis:** hand off execution to the **ps4-pipeline** skill. Bypass local process execution and desktop file
-  installation. For live testing, stage files through GoldHEN AFSP/LayerFS over FTP at
-  `/data/GoldHEN/AFSP/<TITLE_ID>/`. For final release, compile a GP4-based patch package.
+### 2. Route: always ps4-pipeline
+- **This toolkit is PS4-only.** There is no PC/Windows routing path. Every request routes through
+  **ps4-pipeline**:
+  1. Unpack the FPKG into a working `app0`/`patch0` staged directory.
+  2. Modify engine assets (textures, models, audio, text, native Orbis ELF components where applicable).
+  3. Stage live via GoldHEN AFSP: `tools/ps4_afsp_sync.py --ip <PS4_IP> --title-id <CUSA_ID> --local-dir <staged_dir>`.
+  4. Build the FPKG: generate `.gp4` with `tools/gp4_generator.py`, compile with `orbis-pub-cmd.exe pkg_build`.
+- Bypass desktop file installation, local process execution, DLL proxying, and loose file loaders entirely.
 
-### 3. Pick the cheapest route that reaches the idea
+### 3. Pick the cheapest route that reaches the idea (PS4 context)
 
 | Route | When | Examples |
 |---|---|---|
-| Data / assets only | the idea fits the game's data files | AoE2 `.dat` via genieutils, Bethesda ESP/ESL, Paradox scripts, JSON content packs, pak overrides |
-| Loader API | a loader exposes hooks for it | tModLoader `ModItem`/`ModNPC`, SMAPI, BepInEx plugin, UE4SS Lua, REFramework Lua, SKSE plugin |
-| Managed-code patching | .NET/Mono/IL2CPP/Java with no API for your idea | Harmony prefix/postfix/transpiler, MonoMod, Mixin |
-| Native hooks | C/C++ engine with no loader | proxy DLL (`dinput8`/`version`/`winmm`) + MinHook/SafetyHook, signature scans |
-| Reimplement / decomp / recomp | total control, or retro consoles | N64 decomps, N64Recomp, XenonRecomp, IW4L-style rewrites that read the user's own game files |
-| Mashup / passthrough | two games at once | the **mashup-mods** skill |
+| Data / assets only | the idea fits game data files in app0/patch0 | texture swaps, model replacements, audio replaces, text/string changes, param.sfo edits |
+| Native ELF patching | C/C++ engine with no higher-level API | signature scans on eboot.bin/orbis ELF, inline hooks where safe and legal |
+| Reimplement / decomp / recomp | total control, or retro/console | console decomp projects that read the user's own game files |
+| Mashup / passthrough | two games at once via GoldHEN AFSP redirection | the **mashup-mods** skill |
 
 Write the chosen route and the reason into MODLOG.md before building.
 
 ### 4. Lab setup (the safety net)
 - Before the first modded launch, run `um backup create "<saves folder>" --name <game>-saves` (the paths come
   from `um scan`). Snapshot the config/profile folder too if you'll change settings.
-- Use a separate lab profile or save folder when the loader allows it (tModLoader
-  `-tmlsavedirectory`, an MO2 profile, a copy of the world or scenario). Scripted takes destroy test worlds,
+- Use a separate lab profile or save slot when the game allows it. Scripted takes destroy test worlds/saves,
   so keep a pristine copy and restore it before every take.
-- Use windowed mode at a known client size (registry/ini, see game-automation) so screenshots and click
-  coordinates stay stable.
 - Keep decompiled code and extracted assets outside the repo (e.g. `~/<game>-decomp`) and gitignore any
   derived data. Never commit game files.
 
 ### 5. Read the source of truth
 Read the actual code and data instead of guessing how the engine behaves. The **reverse-engineering** skill
 covers the tools:
-- decompile: ILSpy/`ilspycmd`, Cpp2IL, Vineflower, Ghidra/IDA over MCP;
-- dump data: genieutils, xEdit, UndertaleModTool, FModel;
-- inspect live: UnityExplorer, the UE4SS live viewer, REFramework, Cheat Engine.
+- inspect binaries: Ghidra/IDA over MCP, Cpp2IL where IL2CPP is involved;
+- dump data: extract app0/patch0 files from the FPKG, inspect param.sfo, parse game containers;
+- inspect live: GoldHEN AFSP redirection confirms what the console loads.
 
 Record exact names and IDs in MODLOG.md. Check what the executable enforces as well as what the data says.
-In AoE2 the data happily holds a 64th civilization, but the civ picker only lists civs from a table
-hard-coded in the exe, so the mod replaces a slot instead of adding one.
 
 ### 6. Vertical slice first
-Take one item, unit or weapon all the way through with placeholder art. Define it, launch, and prove it
-appears and works, from the log plus a screenshot you actually look at. Only then widen. Commit each working
-step in the mod's own git repo.
+Take one changed file all the way through with placeholder art. Define it, stage it via GoldHEN AFSP, reload
+the game on the PS4, and prove it appears and works, from the FTP staging confirmation plus on-console
+verification you actually perform. Only then widen. Commit each working step in the mod's own git repo.
 
 ### 7. Assets (fal-assets and asset-pipeline skills)
-Study the game's own assets first: size, palette, outline, camera angle, facing, frame layout. Then generate
-with `um fal`. Every call is recorded in `fal_manifest.jsonl`. Convert with `um sprite` / `um render3d` into
-exactly what the engine loads.
-- **Consistency across many angles and frames:** generate one concept, turn it into 3D
-  (`um fal model3d`), then render every heading from the game's camera (`um render3d --preset aoe2`).
-- **Pixel-art games:** generate on a flat background or with transparency, cut out, then do one
-  nearest-neighbour fit to the frame size.
+Study the game's own assets first: size, palette, format, orientation. Then generate with `um fal`. Every call
+is recorded in `fal_manifest.jsonl`. Convert with `um sprite` / `um render3d` into exactly what the engine
+loads. Remember PS4 asset constraints: textures may need Morton-order swizzling, audio may need ATRAC9, and
+shaders must be pre-compiled PSSL bytecode.
 
 ### 8. Verify in the real game (build an oracle)
-The running game is the oracle; your reading of the code is not.
-- Make the test repeatable: a mod-side chat command or timeline, a scenario with triggers, or a test world.
-  Drive the launch → menus → scene path with `um win launch/drive`, and check it with `um win shot` plus the
-  game's log files.
-- Read screenshots at reduced scale (`--scale 0.33`) to save tokens; multiply coordinates back when clicking.
+The running game on the PS4 is the oracle; your reading of the code is not.
+- Make the test repeatable: stage a known set of files via GoldHEN AFSP, reload/resume the game, and check.
+- Use `tools/ps4_afsp_sync.py` to confirm FTP upload success, then verify file existence on the PS4 FTP
+  layer. Supplement with GoldHEN REST/API status checks when available.
+- Perform explicit manual on-console validation: launch/resume the game, confirm the modded assets appear,
+  and record the result.
 - **Circuit breaker:** if the same failure repeats 3 times, stop. Write down what you know, then change
   approach or ask the user.
-- Common log locations:
-
-| Game / loader | Log |
-|---|---|
-| tModLoader | `client.log` |
-| BepInEx | `BepInEx/LogOutput.log` |
-| UE4SS | `UE4SS.log` |
-| Unity | `Player.log` in `AppData/LocalLow/<company>/<product>/` |
-| SKSE | `Documents/My Games/<game>/SKSE/` |
-| Minecraft | `logs/latest.log` |
 
 ### 9. Showcase (the showcase-video skill)
-Script the take so it's repeatable. Record the game window with the game's own audio (`um win record`).
-Choose moments from a contact sheet, then cut 20-45 s with one-line titles and a fade-out
-(`um video compile`).
+Script the take so it's repeatable. Record the console footage with the game's own audio. Choose moments from a
+contact sheet, then cut 20-45 s with one-line titles and a fade-out (`um video compile`).
 
 ### 10. Package and publish (the publish-mod skill)
-Run `um publish check <mod> --game "<install>"`. Write a README with install steps. Credit tools, loaders and
-fal-generated assets, and be honest that it was built with AI. Ship no game files.
+Run `um publish check <mod>`. Write a README with install steps for the PS4 distribution format. Credit tools,
+loaders and fal-generated assets, and be honest that it was built with AI. Ship only FPKG patches or GoldHEN
+AFSP drop-in archives — never raw game files.
 
 ### 11. Leave a field note (the share-field-notes skill)
 Turn `MODLOG.md` into a knowledge-base note (`um kb new ...`, then `um kb check`). Cover:
-- exact versions;
+- exact CUSA title ID, CONTENT_ID and passcode;
 - the route;
 - what the engine really does;
-- how you verified it;
+- how you verified it on-console;
 - numbered gotchas.
 
 With your human's OK, open a PR (`um kb pr <note> --yes`). Do this even if the mod isn't finished: a
 documented dead end saves the next agent hours.
 
 ## Hard rules
-- **Ownership.** Only mod games the user owns.
+- **Ownership.** Only mod PS4 games the user owns.
 - **Online play.** Stay in single-player/offline, or on servers the user controls. Never touch the client of
-  an online game protected by anti-cheat (EasyAntiCheat, BattlEye, Vanguard, VAC on official servers,
-  Ricochet, ACE). Never write cheats (aimbots, ESP, speedhacks) for multiplayer.
-- **No bypasses.** Never bypass anti-cheat, DRM or ownership checks. tModLoader refuses to start unless the
-  free tModLoader app is in the user's Steam library: add it, don't patch the check. If a game needs its
-  anti-cheat off for mods, use only the official offline launch option.
+  an online game protected by anti-cheat. Never write cheats (aimbots, ESP, speedhacks) for multiplayer.
+- **No bypasses.** Never bypass anti-cheat, DRM or ownership checks. If a game needs its anti-cheat off for
+  mods, use only the official offline launch option.
 - **No redistribution.** Don't ship game files, decompiled source or extracted assets. Ship your own code and
-  assets, or patches and converters that run on the user's own install ("bring your own game files").
+  assets, or FPKG patches and GoldHEN AFSP archives that run on the user's own console ("bring your own game
+  files").
 - **Back up first.** Run `um backup` before changing saves, profiles or game folders. Keep the restore path
   written in MODLOG.md.
 - **Process hygiene.**
-  - Kill by exact PID (`um win kill <pid>`). Never use `pkill -f` (it matches your own shell) or wildcard
-    kills.
-  - Never block the game's main thread (for example by waiting on ffmpeg from inside a mod).
-  - Clear crash reporters (BugSplat etc.) by PID when Steam refuses to relaunch.
-- **The user's machine.**
-  - Driving input takes over their mouse and keyboard. Check `um win drive --proc X idle` and ask before long
-    automated sessions while they're at the PC.
-  - Ask before installing a loader into the game folder, changing registry or graphics settings, deleting
-    anything, or publishing.
+  - Kill by exact PID when applicable. Never use name-pattern kills.
+  - Never block the game's main thread.
+- **Publishing.** Ask before publishing anything, PRs included.
+- **No desktop automation.** This toolkit is PS4-only. Do not drive desktop mouse/keyboard, install PC loaders,
+  touch the Windows registry, or route any request to desktop modding workflows.
 
 ## References
 - `references/engines/`:
-  - big engines: `unity.md`, `unreal.md`, `godot.md`, `source.md`, `native.md`;
-  - families and frameworks: `dotnet-xna.md` (Terraria, Stardew, Celeste), `bethesda.md`,
-    `big-frameworks.md` (RE Engine, FromSoft, GTA, Cyberpunk, BG3), `misc-engines.md` (GameMaker, RPG Maker,
-    Ren'Py, Paradox, Doom, HTML5, LÖVE, Java), `zengin.md` (Gothic 1/2: Daedalus scripts, Union, GD3D11);
+  - PS4/Orbis: playbooks covering param.sfo, eboot.bin, FPKG structure, Orbis ELF binaries, GoldHEN AFSP/LayerFS;
+  - cross-platform engines that may appear inside PS4 games: `unity.md`, `unreal.md`, `godot.md`, `source.md`,
+    `native.md`;
+  - families and frameworks: `dotnet-xna.md`, `bethesda.md`, `big-frameworks.md` (RE Engine, FromSoft, GTA,
+    Cyberpunk, BG3), `misc-engines.md`, `zengin.md`;
   - single games and retro: `minecraft.md`, `genie-aoe2.md`, `retro-decomp.md`.
-- `references/case-studies.md`: Terraria, AoE2 and Minecraft × GTA V end to end, every non-obvious fact.
-- The knowledge base (`knowledge/` at the repo root; `um kb search`): field notes by many agents, per game
-  and per technique.
+- `references/case-studies.md`: PS4 end-to-end examples, every non-obvious fact.
+- The knowledge base (`knowledge/` at the repo root; `um kb search`): field notes by many agents, per PS4
+  game and per technique.
 - `references/safety.md`: the rules with their reasons, anti-cheat and legal hygiene.
+- `tools/gp4_generator.py --help` and `tools/ps4_afsp_sync.py --help`: the two console-oriented scripts.

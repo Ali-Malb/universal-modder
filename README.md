@@ -1,11 +1,13 @@
 <p align="center">
-  <img src="docs/media/banner.png" alt="universal-modder: mod any game. Point any AI coding agent at the PC games you own. Publish your mods, remix other people's, and make new ones." width="100%">
+  <img src="docs/media/banner.png" alt="universal-modder: mod PlayStation 4 games. Point any AI coding agent at the PS4 games you own. Publish FPKG patches and GoldHEN AFSP drops, and learn how PS4 games were modded." width="100%">
 </p>
 
 <p align="center">
-  <b>Skills, tools and a shared knowledge base that let any AI coding agent mod almost any PC game you own.</b><br>
-  The agent finds the game, works out the engine and the route, reads the real code, builds the mod, makes art, 3D and sound
-  with <a href="https://fal.ai">fal</a>, tests it in the running game, cuts the video, and writes down what it learned for the next agent.
+  <b>Skills, tools and a shared knowledge base that let any AI coding agent mod PlayStation 4 games you own,
+  using FPKG packages and GoldHEN live asset staging.</b><br>
+  The agent identifies the CUSA title, reads param.sfo and eboot.bin, unpacks the FPKG, modifies engine assets,
+  stages them live through GoldHEN AFSP, builds update/patch FPKGs with orbis-pub-cmd, and writes down what it
+  learned for the next agent.
 </p>
 
 <p align="center">
@@ -17,10 +19,10 @@
 </p>
 
 <p align="center">
-  <img src="docs/media/mods-teaser.gif" alt="Six mods made by AI coding agents, with the universal-modder tile in the corner: Steve gliding an elytra through Los Santos, the Nether spreading over Los Santos, Minecraft mobs fighting the LSPD, the Halo Warthog in Minecraft, a World at War flamethrower in Minecraft, and World at War zombies in Minecraft. It ends on the universal-modder logo and &quot;mod any game.&quot;" width="560">
+  <img src="docs/media/mods-teaser.gif" alt="universal-modder: modding PlayStation 4 games with AI coding agents. FPKG extraction, GoldHEN AFSP live staging, GP4 generation, and orbis-pub-cmd patch compilation." width="560">
 </p>
 
-<p align="center"><b>Coming next: the mod hub.</b> Publish your mods, remix other people's, and make new ones.<br>
+<p align="center"><b>Coming next: the mod hub.</b> Publish your FPKG patches, remix other people's, and make new ones.<br>
   Share what you make, get help, and follow along:</p>
 <p align="center">
   <a href="https://discord.com/invite/sEZWaf7vV"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/media/discord-dark.svg"><img src="docs/media/discord-light.svg" height="32" alt="join the discord"></picture></a>
@@ -61,58 +63,51 @@ uv tool install git+https://github.com/rehan-remade/universal-modder     # or: p
 export FAL_KEY=...
 ```
 You also need Git, Python 3.10+ and ffmpeg. `uv` is recommended. Blender is needed for 3D → sprite renders.
-Windows games are driven natively or from WSL.
+
+This toolkit targets PlayStation 4 (Orbis OS) exclusively. It does not cover PC/Windows modding workflows.
 
 ## Try it
-> Mod Terraria: add a homing missile launcher and a tactical nuke that craters the world. Make the sprites with fal.
+> Mod a PS4 game: unpack its FPKG, change a texture or model, stage it live through GoldHEN AFSP, then build an
+> update FPKG with orbis-pub-cmd.
 
-> Make a new civilization for Age of Empires II with a unique unit rendered from 3D.
+> Put a custom character model into a PS4 game via GoldHEN AFSP and record the result on the console.
 
-> Put real Minecraft inside GTA V story mode. Minecraft's camera should follow GTA's, and its TNT should blow up GTA cars.
+> What is the TITLE_ID of a PS4 game, and what is its CONTENT_ID and passcode?
 
-> Port the Warthog from my Halo install into Minecraft, with a gunner on the turret.
-
-> What engine is `C:\Games\Foo`, and has anyone modded it before?
-
-The agent starts with the **mod-any-game** skill and runs the same loop every time:
-1. search the knowledge base;
-2. recon, then pick a route;
-3. set up a safe lab (saves backed up);
-4. read the actual code;
-5. build one working slice;
-6. generate assets;
-7. verify in the real game;
-8. record;
-9. package;
-10. write a field note for the next agent.
+The agent starts with the **mod-any-game** skill and runs the same PS4 loop every time:
+1. search the knowledge base for the CUSA title or game;
+2. recon: read param.sfo, eboot.bin, app0/patch0 from the FPKG dump;
+3. route: hand off to ps4-pipeline for staging and compilation;
+4. set up a safe lab (saves backed up);
+5. read the actual code and assets;
+6. build one working slice (one changed file staged via GoldHEN AFSP);
+7. generate assets with fal where needed;
+8. verify on the real PS4 (FTP check + on-console validation);
+9. record the console footage;
+10. package the FPKG patch or GoldHEN AFSP archive;
+11. write a field note for the next agent.
 
 ## A knowledge base that AIs write for AIs
-[`knowledge/`](knowledge/) holds **field notes**: how specific games were actually modded, decompiled and
-reverse-engineered. Each note gives:
-- the exact versions that worked;
+[`knowledge/`](knowledge/) holds **field notes**: how specific PS4 games were actually modded via FPKG and
+GoldHEN. Each note gives:
+- the exact CUSA title ID, CONTENT_ID and passcode that worked;
 - the route, and why;
 - what the engine really does;
-- how it was verified;
+- how it was verified on-console;
 - the gotchas (symptom → cause → fix).
 
 **Every agent that finishes a mod can open a pull request with its note**, so the next agent starts where it
 left off instead of rediscovering the same traps.
 
 ```bash
-um kb search "grand theft auto"                 # before you start: prior art (works outside the repo too)
-um kb new --game "Hades II" --title "A new boon god" --from-scan hades --agent "Codex (gpt-6)"
-um kb check knowledge/games/hades-ii/a-new-boon-god.md
-um kb pr knowledge/games/hades-ii/a-new-boon-god.md --yes    # after your human says OK: branch, push, PR
+um kb search "CUSA00000"                 # before you start: prior art (works outside the repo too)
+um kb new --game "<game name>" --title "A new mod" --from-scan <CUSA_TITLE_ID> --agent "Codex (gpt-6)"
+um kb check knowledge/games/<game>/a-new-mod.md
+um kb pr knowledge/games/<game>/a-new-mod.md --yes    # after your human says OK: branch, push, PR
 ```
-Browse [`knowledge/INDEX.md`](knowledge/INDEX.md). Every game is welcome. Contribution rules, for humans and
-AIs, are in [`CONTRIBUTING.md`](CONTRIBUTING.md): no game files, no decompiled dumps, no cheating other
-players, and an honest status and verification.
-
-A few notes from the community:
-- [Portalcraft: real Minecraft inside Portal 2](knowledge/games/portal-2/portalcraft-minecraft-inside-portal-2.md)
-- [Halo 3 weapons, Covenant, vehicles and maps ported into Minecraft](knowledge/games/halo-3-mcc/halo-3-weapons-covenant-vehicles-and-maps-ported-into-minecr.md)
-- [Bloons TD 6 inside Minecraft, with the game's rules as a headless sim](knowledge/games/minecraft/bloons-td-6-in-minecraft.md)
-- [A CS2-style conversion of Elden Ring offline, as a native Rust DLL](knowledge/games/elden-ring/cs2-conversion-of-elden-ring-offline-native-rust-dll-via-me3.md)
+Browse [`knowledge/INDEX.md`](knowledge/INDEX.md). Contribution rules, for humans and AIs, are in
+[`CONTRIBUTING.md`](CONTRIBUTING.md): no game files, no decompiled dumps, no cheating other players, and an
+honest status and verification.
 
 ## What's inside
 
@@ -121,16 +116,24 @@ A few notes from the community:
 <table>
   <thead><tr><th width="200">Skill</th><th>What it does</th></tr></thead>
   <tbody>
-    <tr><td><a href="skills/mod-any-game"><code>mod-any-game</code></a></td><td>The whole loop, hard safety rules, and <b>12 engine playbooks</b>: Unity, Unreal, .NET/XNA (Terraria, Stardew, Celeste), Godot, Source 1/2, Bethesda, Minecraft, AoE2/Genie, RE Engine/FromSoft/GTA/Cyberpunk/BG3, native C++, indie engines (GameMaker, RPG Maker, Ren'Py, Paradox, Doom, HTML5, LÖVE, Java), retro decomps</td></tr>
-    <tr><td><a href="skills/game-recon"><code>game-recon</code></a></td><td>Prior field notes, engine and version, managed or native, anti-cheat, loaders, save folders, community route → <code>MODDING_PLAN.md</code></td></tr>
-    <tr><td><a href="skills/game-research-websearch"><code>game-research-websearch</code></a></td><td>Open-web research that survives dead forums: Wayback/archive.today, GitHub/code and Nexus/Workshop/Thunderstore APIs, Reddit/YouTube, login-gated handoff, screenshots as evidence</td></tr>
-    <tr><td><a href="skills/reverse-engineering"><code>reverse-engineering</code></a></td><td>ILSpy / Cpp2IL / Vineflower / Ghidra and IDA over MCP / Cheat Engine / Frida / RenderDoc; reverse-engineer a file format and prove it with a round trip</td></tr>
-    <tr><td><a href="skills/fal-assets"><code>fal-assets</code></a></td><td>Sprites with real transparency, consistent variants, pixel art, seamless textures, PBR maps, image-to-3D, auto-rigging, SFX, music, voice, cutscene video</td></tr>
-    <tr><td><a href="skills/asset-pipeline"><code>asset-pipeline</code></a></td><td>Art → engine-exact frames: cutout, nearest-neighbour fit, palettes, sheets, team-colour masks, 3D → 8/16-heading sprites</td></tr>
-    <tr><td><a href="skills/game-automation"><code>game-automation</code></a></td><td>Launch, screenshot (GPU-safe), click/type safely, windowed mode, crash-reporter cleanup, in-game agent bridges</td></tr>
-    <tr><td><a href="skills/showcase-video"><code>showcase-video</code></a></td><td>Record the window with only the game's audio, pick moments, cut a styled video from an EDL</td></tr>
-    <tr><td><a href="skills/mashup-mods"><code>mashup-mods</code></a></td><td>Game inside a game: content ports, passthrough mods (worked example: Minecraft × GTA V), decomps as libraries, reimplementations</td></tr>
-    <tr><td><a href="skills/publish-mod"><code>publish-mod</code></a></td><td>Lint, package per platform, credits, the post</td></tr>
+    <tr><td><a href="skills/mod-any-game"><code>mod-any-game</code></a></td><td>The PS4 modding loop: intake, recon from param.sfo/eboot.bin/app0, route via ps4-pipeline, GoldHEN
+  AFSP staging, orbis-pub-cmd FPKG build. PS4-only; no PC/Windows workflows.</td></tr>
+    <tr><td><a href="skills/game-recon"><code>game-recon</code></a></td><td>Prior field notes, CUSA title IDs, param.sfo metadata, eboot.bin, FPKG structure, GoldHEN routes →
+  <code>MODDING_PLAN.md</code></td></tr>
+    <tr><td><a href="skills/game-research-websearch"><code>game-research-websearch</code></a></td><td>Open-web research that survives dead forums: Wayback/archive.today, GitHub/code searches, Reddit/YouTube,
+  login-gated handoff, screenshots as evidence</td></tr>
+    <tr><td><a href="skills/reverse-engineering"><code>reverse-engineering</code></a></td><td>Ghidra/IDA over MCP, Cpp2IL, Vineflower; reverse-engineer PS4 binary formats and prove them with a round
+  trip</td></tr>
+    <tr><td><a href="skills/fal-assets"><code>fal-assets</code></a></td><td>Textures, PBR maps, image-to-3D models (GLB), auto-rigging, SFX, music, voice, cutscene video — for
+  PS4 asset preparation</td></tr>
+    <tr><td><a href="skills/asset-pipeline"><code>asset-pipeline</code></a></td><td>Art → engine-exact frames: cutout, nearest-neighbour fit, palettes, sheets, team-colour masks, 3D →
+  sprite frames where the game needs them</td></tr>
+    <tr><td><a href="skills/game-automation"><code>game-automation</code></a></td><td>Console-oriented validation only: FTP file existence checks, GoldHEN REST/API status polling, on-console
+  verification checklists. No desktop GUI hooks.</td></tr>
+    <tr><td><a href="skills/showcase-video"><code>showcase-video</code></a></td><td>Record console footage, pick moments, cut a styled video from an EDL</td></tr>
+    <tr><td><a href="skills/mashup-mods"><code>mashup-mods</code></a></td><td>Content ports and passthrough-style mods on PS4 via GoldHEN AFSP redirection.</td></tr>
+    <tr><td><a href="skills/publish-mod"><code>publish-mod</code></a></td><td>PS4 distribution: standalone update FPKG (`pkg_ps4_patch` via `orbis-pub-cmd`) and GoldHEN AFSP
+  drop-in archives (`.zip` for `/data/GoldHEN/AFSP/<TITLE_ID>/`). No PC mod distributors.</td></tr>
     <tr><td><a href="skills/share-field-notes"><code>share-field-notes</code></a></td><td>Search the knowledge base, write your own note, open the PR</td></tr>
   </tbody>
 </table>
@@ -141,53 +144,33 @@ A few notes from the community:
 <table>
   <thead><tr><th width="62">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th><th width="170">Command</th><th>What it does</th></tr></thead>
   <tbody>
-    <tr><td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/media/icons/scan-dark.svg"><img src="docs/media/icons/scan-light.svg" width="36" height="36" alt=""></picture></td><td><code>um scan</code></td><td>Find Steam/Epic/Xbox installs; fingerprint engine and version, .NET vs native, anti-cheat, installed loaders, save folders, ranked routes</td></tr>
+    <tr><td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/media/icons/scan-dark.svg"><img src="docs/media/icons/scan-light.svg" width="36" height="36" alt=""></picture></td><td><code>um scan</code></td><td>Find PS4 game installs; fingerprint CUSA title ID, param.sfo metadata, eboot.bin, app0/patch0 structure,
+  FPKG routes</td></tr>
     <tr><td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/media/icons/fal-dark.svg"><img src="docs/media/icons/fal-light.svg" width="36" height="36" alt=""></picture></td><td><code>um fal</code></td><td><code>sprite</code>, <code>image</code>, <code>edit</code>, <code>rmbg</code>, <code>pixelate</code>, <code>upscale</code>, <code>texture</code>, <code>pbr</code>, <code>model3d</code>, <code>rig</code>, <code>sfx</code>, <code>music</code>, <code>voice</code>, <code>video</code>, <code>run</code>, <code>search</code>, <code>schema</code>, <code>price</code>. Plain REST, with a manifest of every generation</td></tr>
     <tr><td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/media/icons/comfy-dark.svg"><img src="docs/media/icons/comfy-light.svg" width="36" height="36" alt=""></picture></td><td><code>um comfy</code></td><td><code>status</code>, <code>image</code> (<code>--sprite</code> cuts it out), <code>run</code> (any workflow saved with Export (API)). Images from a local ComfyUI server, no API key</td></tr>
     <tr><td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/media/icons/sprite-dark.svg"><img src="docs/media/icons/sprite-light.svg" width="36" height="36" alt=""></picture></td><td><code>um sprite</code></td><td><code>cutout</code>, <code>fit</code>, <code>pixelate</code>, <code>palette</code>, <code>sheet</code>, <code>slice</code>, <code>frames</code>, <code>team-mask</code>, <code>seamless</code>, <code>preview</code></td></tr>
     <tr><td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/media/icons/render3d-dark.svg"><img src="docs/media/icons/render3d-light.svg" width="36" height="36" alt=""></picture></td><td><code>um render3d</code></td><td>GLB → sprite frames from the game's camera (<code>aoe2</code>, <code>iso8</code>, <code>trueiso</code>, <code>topdown</code>, <code>side</code>, <code>turntable</code>) with Blender</td></tr>
-    <tr><td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/media/icons/win-dark.svg"><img src="docs/media/icons/win-light.svg" width="36" height="36" alt=""></picture></td><td><code>um win</code></td><td><code>shot</code>, <code>record</code> (gfxcapture + process-loopback audio), <code>drive</code> (input that only reaches the game), <code>ps</code>, <code>kill</code>, <code>launch</code>, <code>reg</code></td></tr>
     <tr><td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/media/icons/video-dark.svg"><img src="docs/media/icons/video-light.svg" width="36" height="36" alt=""></picture></td><td><code>um video</code></td><td><code>contact</code> sheets, <code>compile</code> (EDL → titled, beat-cut video with music), <code>mux</code>, <code>beats</code>, <code>first-frame</code></td></tr>
     <tr><td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/media/icons/backup-dark.svg"><img src="docs/media/icons/backup-light.svg" width="36" height="36" alt=""></picture></td><td><code>um backup</code></td><td>Snapshot, diff and restore save folders</td></tr>
-    <tr><td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/media/icons/publish-dark.svg"><img src="docs/media/icons/publish-light.svg" width="36" height="36" alt=""></picture></td><td><code>um publish check</code></td><td>Blocks shipping game files, decompiled code and leaked keys</td></tr>
+    <tr><td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/media/icons/publish-dark.svg"><img src="docs/media/icons/publish-light.svg" width="36" height="36" alt=""></picture></td><td><code>um publish check</code></td><td>Blocks shipping game files, decompiled code and leaked keys; validates FPKG and GoldHEN AFSP distribution
+  packages</td></tr>
     <tr><td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/media/icons/kb-dark.svg"><img src="docs/media/icons/kb-light.svg" width="36" height="36" alt=""></picture></td><td><code>um kb</code></td><td>The knowledge base: <code>search</code>, <code>show</code>, <code>new</code>, <code>check</code>, <code>index</code>, <code>sync</code>, <code>pr</code></td></tr>
   </tbody>
 </table>
 
-Two no-build Windows tools ship inside the package (`um/ps1/`): WinDrive input and ProcLoopback game-only
-audio, both PowerShell with embedded C#.
-
-<p align="center"><img src="docs/media/pipeline.png" alt="The 3D route: a fal concept, then a fal 3D model, then 16 AoE2 headings from um render3d. The 2D route: fal art, a cutout, a 64x26 sprite, and the sprite working in Terraria." width="100%"></p>
+<p align="center"><img src="docs/media/pipeline.png" alt="The PS4 route: unpack FPKG, modify assets, stage via GoldHEN AFSP, build GP4, compile with orbis-pub-cmd." width="100%"></p>
 
 ## Built with it
-- **[examples/terraria-tmodloader](examples/terraria-tmodloader)**: *Fal Arsenal* for tModLoader.
-  - Weapons: a homing missile launcher, a tactical nuke (crater + mushroom cloud), a chain-lightning rifle, a
-    black-hole gun and an orbital strike.
-  - Three new enemies and a two-phase Drone Mothership boss.
-  - Every sprite came from fal.
-- **[examples/aoe2-de-civ](examples/aoe2-de-civ)**: *San Franciscans* for Age of Empires II DE.
-  - A new civilization with a Robotaxi unique unit and Delivery Drones, rendered from fal image-to-3D models
-    at AoE2's camera angle.
-  - A Transamerica Pyramid wonder.
-  - A reverse-engineered `.sld` sprite writer.
-- **[examples/minecraft-gta5-passthrough](examples/minecraft-gta5-passthrough)**: real Minecraft inside
-  GTA V story mode.
-  - A Fabric mod and a ScriptHookV + ReShade add-on exchange camera, ground and events over a local
-    WebSocket.
-  - Minecraft's colour + depth are depth-composited into GTA's frame.
-  - Minecraft TNT, arrows and fireworks become GTA explosions and bullets, and Minecraft mobs fight the
-    police.
-
-Each has a field note with every non-obvious lesson: [knowledge/INDEX.md](knowledge/INDEX.md).
+PS4 FPKG and GoldHEN examples live in the examples directory. Each has a field note with every non-obvious
+lesson: [knowledge/INDEX.md](knowledge/INDEX.md).
 
 ## Rules it follows
-- **Any game you own: single-player, multiplayer, or servers you host.** It refuses to inject into online
-  games with anti-cheat, write cheats against other players, or bypass anti-cheat, DRM or ownership checks.
-- **It never ships game files or decompiled code.** Mods ship as code, your own assets, patches or
-  converters.
-- **It backs up before touching saves**, and kills processes by PID only.
-- **It asks before** driving your mouse and keyboard, installing loaders into game folders, or publishing,
-  PRs included.
+- **Any PS4 game you own: single-player, or servers you host.** It refuses to inject into online games with
+  anti-cheat, write cheats against other players, or bypass anti-cheat, DRM or ownership checks.
+- **It never ships game files or decompiled code.** Mods ship as FPKG patches or GoldHEN AFSP drop-in
+  archives that run on the user's own console.
+- **It backs up before touching saves**, and uses safe process handling.
+- **It asks before** publishing, PRs included.
 
 Full reasoning: [`skills/mod-any-game/references/safety.md`](skills/mod-any-game/references/safety.md).
 
@@ -204,13 +187,10 @@ Show it off in the [Discord](https://discord.com/invite/sEZWaf7vV), and put the 
 Use `made-with-light.svg` on a light page.
 
 ## Credits
-- Built from real agent sessions modding Terraria, Age of Empires II and GTA V × Minecraft.
+- Built from real agent sessions modding PS4 games via FPKG and GoldHEN.
 - Assets: [fal](https://fal.ai) (GPT Image 2, Nano Banana 2, FLUX, Trellis 2, ElevenLabs...).
-- Standing on the shoulders of tModLoader, genieutils-py, AoE2ScenarioParser, ScriptHookV, ReShade, Fabric,
-  BepInEx, Harmony, UE4SS, REFramework, SKSE, ILSpy, Ghidra and every modding community that documented its
-  game.
-- The engine playbooks also draw on the September 2026 wave of AI-built mods, and on how their creators
-  explained them in public.
+- Standing on the shoulders of LibOrbisPkg, orbis-pub-cmd, GoldHEN, and every PS4 modding community that
+  documented its game.
 
 MIT licensed. Brand type: Geist Pixel, Sometype Mono and Instrument Sans. Video titles: Space Grotesk and JetBrains Mono. All under the SIL OFL.
 

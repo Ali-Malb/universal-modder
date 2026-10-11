@@ -64,3 +64,13 @@ Capture: the loader's name, repo, **current version and install steps**, the gam
 - Unknowns to resolve first: <list>
 ```
 Then continue with the mod-any-game loop (lab setup → source of truth → vertical slice).
+
+## Console Identification: PS4 Targets
+
+If the target workspace contains `.pkg`, `eboot.bin`, or a `sce_sys/` folder:
+- **Metadata**: Parse `param.sfo` for `TITLE_ID`, `APP_VER`, and engine category.
+- **Executables**: Check if `eboot.bin` is encrypted (SELF) or decrypted (ELF). If SELF, prompt to dump the decrypted ELF from the console.
+- **Engine Locators**:
+  - Unreal Engine: Look inside `app0/<GameName>/Content/Paks/` (target PS4 cooked pak files).
+  - Unity: Look for `app0/Media/` or `app0/Data/Managed/`.
+  - Native/Custom: Check for container archives (`.cpk`, `.arc`, `.psarc`, `.dat`).

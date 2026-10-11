@@ -108,3 +108,9 @@ output in the mod, its repo or a release; each user runs the converter on their 
   accept only `[a-z0-9_./-]`. For posed meshes, a custom mesh file drawn with
   `RenderType.entityCutoutNoCull` is more robust than `forge:obj` (block-atlas textures, `usemtl`).
 - **Oracle:** render preview sheets by re-reading the files you wrote, and look at them.
+
+## PS4 Asset Format Constraints
+
+- **Textures**: PS4 GNM/GNMX requires Morton-order swizzled/tiled textures rather than standard desktop linear DDS/PNG textures. Use `OrbisTextureTool` or engine-specific PS4 cooks.
+- **Audio**: Native soundbanks often use ATRAC9 (`.at9`) containers. Convert audio assets with an AT9 encoder before archive repacking.
+- **Shaders**: Shaders must be pre-compiled PSSL bytecode; raw HLSL/GLSL will not load at runtime.
